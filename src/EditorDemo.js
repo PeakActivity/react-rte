@@ -1,20 +1,24 @@
 /* @flow */
-import React, {Component} from 'react';
-import RichTextEditor, {createEmptyValue} from './RichTextEditor';
-import {convertToRaw} from 'draft-js';
-import autobind from 'class-autobind';
+import React, { Component } from "react";
+import RichTextEditor, { createEmptyValue } from "./RichTextEditor";
+import { convertToRaw } from "draft-js";
+import autobind from "class-autobind";
+import {
+  getTextAlignBlockMetadata,
+  getTextAlignClassName,
+  getTextAlignStyles
+} from "./lib/blockStyleFunctions";
+import ButtonGroup from "./ui/ButtonGroup";
+import Dropdown from "./ui/Dropdown";
+import IconButton from "./ui/IconButton";
 
-import ButtonGroup from './ui/ButtonGroup';
-import Dropdown from './ui/Dropdown';
-import IconButton from './ui/IconButton';
-
-import type {EditorValue} from './RichTextEditor';
+import type { EditorValue } from "./RichTextEditor";
 
 type Props = {};
 type State = {
-  value: EditorValue;
-  format: string;
-  readOnly: boolean;
+  value: EditorValue,
+  format: string,
+  readOnly: boolean
 };
 
 export default class EditorDemo extends Component {
@@ -26,18 +30,24 @@ export default class EditorDemo extends Component {
     autobind(this);
     this.state = {
       value: createEmptyValue(),
-      format: 'html',
-      readOnly: false,
+      format: "html",
+      readOnly: false
     };
   }
 
   render() {
-    let {value, format} = this.state;
+    let { value, format } = this.state;
 
     return (
       <div className="editor-demo">
         <div className="row">
-          <p>This is a demo of the <a href="https://github.com/sstur/react-rte" target="top">react-rte</a> editor.</p>
+          <p>
+            This is a demo of the{" "}
+            <a href="https://github.com/sstur/react-rte" target="top">
+              react-rte
+            </a>{" "}
+            editor.
+          </p>
         </div>
         <div className="row">
           <RichTextEditor
@@ -48,20 +58,21 @@ export default class EditorDemo extends Component {
             toolbarClassName="demo-toolbar"
             editorClassName="demo-editor"
             readOnly={this.state.readOnly}
+            blockStyleFn={getTextAlignClassName}
             customControls={[
               // eslint-disable-next-line no-unused-vars
               (setValue, getValue, editorState) => {
                 let choices = new Map([
-                  ['1', {label: '1'}],
-                  ['2', {label: '2'}],
-                  ['3', {label: '3'}],
+                  ["1", { label: "1" }],
+                  ["2", { label: "2" }],
+                  ["3", { label: "3" }]
                 ]);
                 return (
                   <ButtonGroup key={1}>
                     <Dropdown
                       choices={choices}
-                      selectedKey={getValue('my-control-name')}
-                      onChange={(value) => setValue('my-control-name', value)}
+                      selectedKey={getValue("my-control-name")}
+                      onChange={value => setValue("my-control-name", value)}
                     />
                   </ButtonGroup>
                 );
@@ -71,9 +82,9 @@ export default class EditorDemo extends Component {
                   label="Remove Link"
                   iconName="remove-link"
                   focusOnClick={false}
-                  onClick={() => console.log('You pressed a button')}
+                  onClick={() => console.log("You pressed a button")}
                 />
-              </ButtonGroup>,
+              </ButtonGroup>
             ]}
           />
         </div>
@@ -83,7 +94,7 @@ export default class EditorDemo extends Component {
               type="radio"
               name="format"
               value="html"
-              checked={format === 'html'}
+              checked={format === "html"}
               onChange={this._onChangeFormat}
             />
             <span>HTML</span>
@@ -93,7 +104,7 @@ export default class EditorDemo extends Component {
               type="radio"
               name="format"
               value="markdown"
-              checked={format === 'markdown'}
+              checked={format === "markdown"}
               onChange={this._onChangeFormat}
             />
             <span>Markdown</span>
@@ -111,14 +122,18 @@ export default class EditorDemo extends Component {
           <textarea
             className="source"
             placeholder="Editor Source"
-            value={value.toString(format)}
+            value={value.toString(format, { blockStyleFn: getTextAlignStyles })}
             onChange={this._onChangeSource}
           />
         </div>
         <div className="row btn-row">
           <span className="label">Debugging:</span>
-          <button className="btn" onClick={this._logState}>Log Content State</button>
-          <button className="btn" onClick={this._logStateRaw}>Log Raw</button>
+          <button className="btn" onClick={this._logState}>
+            Log Content State
+          </button>
+          <button className="btn" onClick={this._logStateRaw}>
+            Log Raw
+          </button>
         </div>
       </div>
     );
@@ -126,34 +141,38 @@ export default class EditorDemo extends Component {
 
   _logState() {
     let editorState = this.state.value.getEditorState();
-    let contentState = window.contentState = editorState.getCurrentContent().toJS();
+    let contentState = (window.contentState = editorState
+      .getCurrentContent()
+      .toJS());
     console.log(contentState);
   }
 
   _logStateRaw() {
     let editorState = this.state.value.getEditorState();
     let contentState = editorState.getCurrentContent();
-    let rawContentState = window.rawContentState = convertToRaw(contentState);
+    let rawContentState = (window.rawContentState = convertToRaw(contentState));
     console.log(JSON.stringify(rawContentState));
   }
 
   _onChange(value: EditorValue) {
-    this.setState({value});
+    this.setState({ value });
   }
 
   _onChangeSource(event: Object) {
     let source = event.target.value;
     let oldValue = this.state.value;
     this.setState({
-      value: oldValue.setContentFromString(source, this.state.format),
+      value: oldValue.setContentFromString(source, this.state.format, {
+        customBlockFn: getTextAlignBlockMetadata
+      })
     });
   }
 
   _onChangeFormat(event: Object) {
-    this.setState({format: event.target.value});
+    this.setState({ format: event.target.value });
   }
 
   _onChangeReadOnly(event: Object) {
-    this.setState({readOnly: event.target.checked});
+    this.setState({ readOnly: event.target.checked });
   }
 }
